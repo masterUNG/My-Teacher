@@ -1,12 +1,14 @@
 package appewtc.masterung.myteacher;
 
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.os.Bundle;
 import android.os.StrictMode;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -62,10 +64,45 @@ public class MainActivity extends AppCompatActivity {
             myAlert.myDialog(this, "มีช่องว่าง", "กรุณากรอกทุกช่อง คะ");
         } else {
             //No Space
-
+            searchUser();
         }
 
     }   // clickSignIn
+
+    private void searchUser() {
+
+        try {
+
+            SQLiteDatabase sqLiteDatabase = openOrCreateDatabase(MyOpenHelper.database_name,
+                    MODE_PRIVATE, null);
+            Cursor cursor = sqLiteDatabase.rawQuery("SELECT * FROM userTABLE WHERE User = " + "'" + userString + "'", null);
+            cursor.moveToFirst();
+            String[] resultStrings = new String[cursor.getColumnCount()];
+            for (int i = 0; i < cursor.getColumnCount(); i++) {
+                resultStrings[i] = cursor.getString(i);
+            }
+            cursor.close();
+
+            //Check Password
+            if (passwordString.equals(resultStrings[2])) {
+
+                Toast.makeText(this, "ยินดีต้อนรับ " + resultStrings[3], Toast.LENGTH_SHORT).show();
+
+            } else {
+
+                MyAlert myAlert = new MyAlert();
+                myAlert.myDialog(this, "Password False", "ลองพิมพ์ ใหม่ Password ผิด");
+
+            }
+
+
+
+        } catch (Exception e) {
+            MyAlert myAlert = new MyAlert();
+            myAlert.myDialog(this, "ไม่มี User นี่", "ไม่มี " + userString + " ในฐานข้อมูลของเรา");
+        }
+
+    }   // searchUser
 
 
     private void synJSON() {
