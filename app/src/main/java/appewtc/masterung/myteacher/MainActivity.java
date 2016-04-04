@@ -1,5 +1,6 @@
 package appewtc.masterung.myteacher;
 
+import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
@@ -86,7 +87,13 @@ public class MainActivity extends AppCompatActivity {
             //Check Password
             if (passwordString.equals(resultStrings[2])) {
 
-                Toast.makeText(this, "ยินดีต้อนรับ " + resultStrings[3], Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "ยินดีต้อนรับ " + resultStrings[3],
+                        Toast.LENGTH_SHORT).show();
+
+                Intent intent = new Intent(MainActivity.this, ShowService.class);
+                intent.putExtra("Result", resultStrings);
+                startActivity(intent);
+                finish();
 
             } else {
 
