@@ -1,7 +1,22 @@
 package appewtc.masterung.myteacher;
 
+import android.database.sqlite.SQLiteDatabase;
+import android.os.StrictMode;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -16,6 +31,90 @@ public class MainActivity extends AppCompatActivity {
         //Request SQLite
         myManage = new MyManage(this);
 
+        //Test Add Value
+        //testAddValue();
+
+        //Delete SQLite
+        deleteSQLite();
+
+        //Synchronize JSON to SQLite
+        synJSON();
+
     }   // Main Method
+
+    private void synJSON() {
+
+        //Connected Http
+        StrictMode.ThreadPolicy threadPolicy = new StrictMode.ThreadPolicy
+                .Builder().permitAll().build();
+        StrictMode.setThreadPolicy(threadPolicy);
+
+        int intTable = 0;
+        InputStream inputStream = null;
+        String strJSON, strLine;
+        String[] urlJSONStrings = {"http://swiftcodingthai.com/Ton/php_get_user_master.php"};
+
+        while (intTable <= 0) {
+
+            try {
+
+                //Create InputStream
+                HttpClient httpClient = new DefaultHttpClient();
+                HttpPost httpPost = new HttpPost(urlJSONStrings[intTable]);
+                HttpResponse httpResponse = httpClient.execute(httpPost);
+                HttpEntity httpEntity = httpResponse.getEntity();
+                inputStream = httpEntity.getContent();
+
+                //Create JSON string
+                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
+                StringBuilder stringBuilder = new StringBuilder();
+                while ((strLine = bufferedReader.readLine()) != null) {
+                    stringBuilder.append(strLine);
+                }   // while
+                inputStream.close();
+                strJSON = stringBuilder.toString();
+
+                //Update To SQLite
+                JSONArray jsonArray = new JSONArray(strJSON);
+                for (int i = 0; i < jsonArray.length(); i++) {
+
+                    JSONObject jsonObject = jsonArray.getJSONObject(i);
+
+                    switch (intTable) {
+                        case 0:
+                            //for userTABLE
+                            String strUser = jsonObject.getString(MyManage.column_user);
+                            String strPassword = jsonObject.getString(MyManage.column_pass);
+                            String strName = jsonObject.getString(MyManage.column_name);
+                            String strIDteacher = jsonObject.getString(MyManage.column_id_teacher);
+                            String strImage = jsonObject.getString(MyManage.column_image);
+                            String strStatus = jsonObject.getString(MyManage.column_status);
+
+                            myManage.addUser(strUser, strPassword, strName,
+                                    strIDteacher, strImage, strStatus);
+                            break;
+                    }   //switch
+
+                }   //for
+
+
+            } catch (Exception e) {
+                Log.d("Teacher", "My Error ==> " + e.toString());
+            }
+
+            intTable += 1;
+        }   // while
+
+    }   // synJSON
+
+    private void deleteSQLite() {
+        SQLiteDatabase sqLiteDatabase = openOrCreateDatabase(MyOpenHelper.database_name,
+                MODE_PRIVATE, null);
+        sqLiteDatabase.delete(MyManage.user_table, null, null);
+    }
+
+    private void testAddValue() {
+        myManage.addUser("user", "pass", "name", "id-1234", "image", "status");
+    }
 
 }   // Main Class
